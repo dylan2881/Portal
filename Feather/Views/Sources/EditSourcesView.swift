@@ -17,26 +17,13 @@ struct EditSourcesView: View {
 	var body: some View {
 		NavigationView {
 			ZStack {
-				// Background gradient
-				LinearGradient(
-					colors: [
-						Color.accentColor.opacity(0.05),
-						Color.clear
-					],
-					startPoint: .top,
-					endPoint: .bottom
-				)
-				.ignoresSafeArea()
+				// Glass background
+				Color(.systemGroupedBackground)
+					.ignoresSafeArea()
 				
 				NBList(.localized("Edit Sources")) {
 					ForEach(Array(sources), id: \.objectID) { source in
 						sourceRow(source)
-							.listRowBackground(
-								RoundedRectangle(cornerRadius: 10, style: .continuous)
-									.fill(Color(uiColor: .secondarySystemGroupedBackground))
-									.padding(.horizontal, 4)
-									.padding(.vertical, 2)
-							)
 					}
 					.onDelete(perform: deleteSource)
 					.onMove(perform: moveSource)
@@ -131,23 +118,12 @@ struct EditSourcesView: View {
 	
 	private var placeholderIcon: some View {
 		RoundedRectangle(cornerRadius: 14, style: .continuous)
-			.fill(
-				LinearGradient(
-					colors: [
-						Color.accentColor.opacity(0.2),
-						Color.accentColor.opacity(0.1)
-					],
-					startPoint: .topLeading,
-					endPoint: .bottomTrailing
-				)
-			)
+			.fill(Color.accentColor.opacity(0.12))
 			.frame(width: 56, height: 56)
 			.overlay(
 				Image(systemName: "globe")
 					.font(.title2)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
+					.foregroundStyle(Color.accentColor,
 							startPoint: .topLeading,
 							endPoint: .bottomTrailing
 						)

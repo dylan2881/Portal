@@ -100,18 +100,9 @@ struct SourcesView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Full screen vertical blue gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.10, blue: 0.25),
-                        Color(red: 0.08, green: 0.15, blue: 0.35),
-                        Color(red: 0.10, green: 0.18, blue: 0.40),
-                        Color(red: 0.06, green: 0.12, blue: 0.30)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Simple background
+                Color(.systemBackground)
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -257,35 +248,22 @@ struct SourcesView: View {
             
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.cyan.opacity(0.3), Color.blue.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.cyan.opacity(0.12))
                     .frame(width: 100, height: 100)
-                    .blur(radius: 20)
                 
                 Image(systemName: "globe.desk.fill")
                     .font(.system(size: 50, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.cyan, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(.cyan)
             }
             
             VStack(spacing: 12) {
                 Text(String.localized("No Repositories"))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Text(String.localized("Get started by adding your first repository."))
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -303,15 +281,9 @@ struct SourcesView: View {
                 .padding(.vertical, 14)
                 .background(
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.cyan, .blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(.cyan)
                 )
-                .shadow(color: .cyan.opacity(0.4), radius: 12, x: 0, y: 6)
+                .shadow(color: .cyan.opacity(0.2), radius: 4, x: 0, y: 2)
             }
             
             Spacer(minLength: 60)
@@ -326,24 +298,12 @@ struct SourcesView: View {
                     VStack(spacing: 16) {
                         ZStack {
                             Circle()
-                                .fill(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.2)]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .fill(Color.blue.opacity(0.12))
                                 .frame(width: 80, height: 80)
                             
                             Image(systemName: "checkmark.shield.fill")
                                 .font(.system(size: 40))
-                                .foregroundStyle(
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [.blue, .purple]),
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .foregroundStyle(.blue)
                         }
                         
                         Text("Developer Certificates")
@@ -388,13 +348,7 @@ struct SourcesView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                gradient: Gradient(colors: [.blue, .purple]),
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .background(.blue)
                         .foregroundStyle(.white)
                         .cornerRadius(12)
                     }
@@ -488,22 +442,12 @@ struct ModernSourceCard: View {
             // Floating icon container with glow
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                accentColor.opacity(0.4),
-                                accentColor.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(accentColor.opacity(0.12))
                     .frame(width: 56, height: 56)
-                    .shadow(color: accentColor.opacity(0.5), radius: 8, x: 0, y: 4)
                 
                 Image(systemName: iconSystemName)
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(accentColor)
             }
             
             VStack(alignment: .leading, spacing: 6) {
@@ -537,38 +481,14 @@ struct ModernSourceCard: View {
         }
         .padding(20)
         .background(
-            ZStack {
-                // Dark blue gradient surface
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.12, green: 0.18, blue: 0.35),
-                                Color(red: 0.08, green: 0.12, blue: 0.28)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                // Inner highlight for glassy effect
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.2),
-                                .white.opacity(0.05),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            }
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
-        .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 8)
-        .shadow(color: accentColor.opacity(0.15), radius: 20, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 }
 
@@ -591,18 +511,9 @@ struct ModernSourceCardWithIcon: View {
             // Floating icon container with glow
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                dominantColor.opacity(0.4),
-                                dominantColor.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(dominantColor.opacity(0.12))
                     .frame(width: 56, height: 56)
-                    .shadow(color: dominantColor.opacity(0.5), radius: 8, x: 0, y: 4)
+                    .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 2)
                 
                 if let iconURL = source.iconURL {
                     LazyImage(url: iconURL) { state in
@@ -664,42 +575,14 @@ struct ModernSourceCardWithIcon: View {
         }
         .padding(20)
         .background(
-            ZStack {
-                // Dark blue gradient surface
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.12, green: 0.18, blue: 0.35),
-                                Color(red: 0.08, green: 0.12, blue: 0.28)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                // Inner highlight for glassy effect
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.2),
-                                .white.opacity(0.05),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-                
-                // Subtle translucent overlay
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(dominantColor.opacity(0.05))
-            }
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
-        .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 8)
-        .shadow(color: dominantColor.opacity(0.15), radius: 20, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         .contextMenu {
             Button {
                 viewModel.togglePin(for: source)
@@ -814,28 +697,12 @@ private struct AllAppsCardView: View {
 	private var iconView: some View {
 		ZStack {
 			Circle()
-				.fill(
-					LinearGradient(
-						colors: [
-							appIconColor.opacity(0.15),
-							appIconColor.opacity(0.08)
-						],
-						startPoint: .topLeading,
-						endPoint: .bottomTrailing
-					)
-				)
+				.fill(appIconColor.opacity(0.12))
 				.frame(width: 44, height: 44)
-				.shadow(color: appIconColor.opacity(0.2), radius: 4, x: 0, y: 2)
 			
 			Image(systemName: "app.badge.fill")
 				.font(.system(size: 20, weight: .semibold))
-				.foregroundStyle(
-					LinearGradient(
-						colors: [appIconColor, appIconColor.opacity(0.8)],
-						startPoint: .topLeading,
-						endPoint: .bottomTrailing
-					)
-				)
+				.foregroundStyle(appIconColor)
 		}
 	}
 	
@@ -865,15 +732,9 @@ private struct AllAppsCardView: View {
 		.padding(.vertical, 3.5)
 		.background(
 			Capsule()
-				.fill(
-					LinearGradient(
-						colors: [appIconColor, appIconColor.opacity(0.85)],
-						startPoint: .leading,
-						endPoint: .trailing
-					)
-				)
+				.fill(appIconColor)
 		)
-		.shadow(color: appIconColor.opacity(0.3), radius: 3, x: 0, y: 1.5)
+		.shadow(color: appIconColor.opacity(0.2), radius: 2, x: 0, y: 1)
 	}
 	
 	private var cardBackground: some View {

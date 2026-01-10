@@ -69,7 +69,7 @@ struct SourcesAddView: View {
 			ScrollView {
 				_mainContent
 			}
-			.background(Color(UIColor.systemGroupedBackground))
+			.background(Color(.systemGroupedBackground))
 			.toolbar {
 				_toolbarContent
 			}
@@ -222,8 +222,6 @@ struct SourcesAddView: View {
 					.buttonStyle(.plain)
 				}
 				.padding()
-				.background(Color(UIColor.secondarySystemGroupedBackground))
-				.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 			}
 			
 			VStack(alignment: .leading, spacing: 8) {
@@ -272,8 +270,6 @@ struct SourcesAddView: View {
 					Spacer()
 				}
 				.padding()
-				.background(Color(UIColor.secondarySystemGroupedBackground))
-				.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 			}
 		}
 		.padding(.horizontal)
@@ -298,8 +294,6 @@ struct SourcesAddView: View {
 					}
 				}
 			}
-			.background(Color(UIColor.secondarySystemGroupedBackground))
-			.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 			
 			VStack(alignment: .leading, spacing: 8) {
 				Text(.localized("More will get added soon!"))

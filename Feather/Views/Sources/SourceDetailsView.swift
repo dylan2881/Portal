@@ -42,18 +42,9 @@ struct SourceDetailsView: View {
     
     var body: some View {
         ZStack {
-            // Full screen vertical blue gradient background
-            LinearGradient(
-                colors: [
-                    Color(red: 0.05, green: 0.10, blue: 0.25),
-                    Color(red: 0.08, green: 0.15, blue: 0.35),
-                    Color(red: 0.10, green: 0.18, blue: 0.40),
-                    Color(red: 0.06, green: 0.12, blue: 0.30)
-                ],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
+            // Simple background
+            Color(.systemBackground)
+                .ignoresSafeArea()
             
             ScrollView {
                 VStack(spacing: 0) {
@@ -139,18 +130,8 @@ struct SourceDetailsView: View {
                 // Leading icon container with depth and glow
                 ZStack {
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    dominantColor.opacity(0.5),
-                                    dominantColor.opacity(0.3)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(dominantColor.opacity(0.12))
                         .frame(width: 80, height: 80)
-                        .shadow(color: dominantColor.opacity(0.6), radius: 12, x: 0, y: 6)
                     
                     if let iconURL = source.iconURL {
                         LazyImage(url: iconURL) { state in
@@ -176,7 +157,7 @@ struct SourceDetailsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(source.name ?? String.localized("Unknown"))
                         .font(.system(size: 22, weight: .bold, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(.primary)
                         .lineLimit(2)
                     
                     if let url = source.sourceURL?.host {
@@ -214,42 +195,14 @@ struct SourceDetailsView: View {
         }
         .padding(24)
         .background(
-            ZStack {
-                // Darker gradient background
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.10, green: 0.15, blue: 0.30),
-                                Color(red: 0.06, green: 0.10, blue: 0.22)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                // Inner highlight
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.25),
-                                .white.opacity(0.05),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-                
-                // Accent glow
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(dominantColor.opacity(0.08))
-            }
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
-        .shadow(color: Color.black.opacity(0.4), radius: 16, x: 0, y: 10)
-        .shadow(color: dominantColor.opacity(0.2), radius: 24, x: 0, y: 12)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
     
     // MARK: - Featured News Section (Horizontal Cards)
@@ -320,17 +273,11 @@ struct SourceDetailsView: View {
                     }
                 } else {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [dominantColor.opacity(0.4), dominantColor.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(dominantColor.opacity(0.12))
                         .overlay(
                             Image(systemName: "newspaper.fill")
                                 .font(.system(size: 32))
-                                .foregroundStyle(.white.opacity(0.5))
+                                .foregroundStyle(dominantColor.opacity(0.5))
                         )
                 }
             }
@@ -341,45 +288,27 @@ struct SourceDetailsView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(newsItem.title)
                     .font(.system(size: 15, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .lineLimit(2)
                 
                 Text(newsItem.caption)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             .padding(14)
             .frame(width: 220, alignment: .leading)
         }
         .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.12, green: 0.18, blue: 0.35),
-                                Color(red: 0.08, green: 0.12, blue: 0.28)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.15), .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            }
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 6)
-        .shadow(color: dominantColor.opacity(0.15), radius: 16, x: 0, y: 8)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Apps Vertical Feed
@@ -442,16 +371,7 @@ struct SourceDetailsView: View {
             // App icon with thumbnail treatment
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                dominantColor.opacity(0.3),
-                                dominantColor.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(dominantColor.opacity(0.12))
                     .frame(width: 60, height: 60)
                 
                 if let iconURL = app.iconURL {
@@ -504,31 +424,14 @@ struct SourceDetailsView: View {
         }
         .padding(18)
         .background(
-            ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.12, green: 0.18, blue: 0.35),
-                                Color(red: 0.08, green: 0.12, blue: 0.28)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.15), .white.opacity(0.03), .clear],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            }
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
-        .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 6)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Empty Apps State
@@ -536,15 +439,8 @@ struct SourceDetailsView: View {
         VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [dominantColor.opacity(0.3), dominantColor.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(dominantColor.opacity(0.12))
                     .frame(width: 70, height: 70)
-                    .blur(radius: 15)
                 
                 Image(systemName: "app.badge.questionmark")
                     .font(.system(size: 32, weight: .medium))
@@ -554,11 +450,11 @@ struct SourceDetailsView: View {
             VStack(spacing: 8) {
                 Text("No Apps Found")
                     .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Text(_searchText.isEmpty ? "This source doesn't have any apps yet" : "Try adjusting your search terms")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.6))
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
         }

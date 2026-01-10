@@ -84,18 +84,9 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Full screen vertical blue gradient background
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.05, green: 0.10, blue: 0.25),
-                        Color(red: 0.08, green: 0.15, blue: 0.35),
-                        Color(red: 0.10, green: 0.18, blue: 0.40),
-                        Color(red: 0.06, green: 0.12, blue: 0.30)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
+                // Simple background
+                Color(.systemBackground)
+                    .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -457,21 +448,9 @@ extension LibraryView {
                         .padding(.vertical, 10)
                         .background(
                             Capsule()
-                                .fill(
-                                    _filterMode == mode
-                                    ? LinearGradient(
-                                        colors: [.cyan, .blue],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                    : LinearGradient(
-                                        colors: [Color.white.opacity(0.1), Color.white.opacity(0.05)],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
+                                .fill(_filterMode == mode ? Color.accentColor : Color.secondary.opacity(0.2))
                         )
-                        .shadow(color: _filterMode == mode ? .cyan.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
+                        .shadow(color: .clear, radius: 0)
                 }
             }
             
@@ -507,35 +486,22 @@ extension LibraryView {
             
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.cyan.opacity(0.3), Color.blue.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Color.accentColor.opacity(0.12))
                     .frame(width: 100, height: 100)
-                    .blur(radius: 20)
                 
                 Image(systemName: "questionmark.app.fill")
                     .font(.system(size: 50, weight: .medium))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.cyan, .blue],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Color.accentColor)
             }
             
             VStack(spacing: 12) {
                 Text("No Apps")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Text("Get started by importing your first IPA file.")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
             
@@ -553,10 +519,9 @@ extension LibraryView {
                 .padding(.vertical, 14)
                 .background(
                     Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.cyan, .blue],
-                                startPoint: .leading,
+                        .fill(Color.accentColor)
+                )
+                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2),
                                 endPoint: .trailing
                             )
                         )
@@ -599,18 +564,9 @@ struct PremiumAppCard: View {
             // Elevated app icon container
             ZStack {
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                dominantColor.opacity(0.4),
-                                dominantColor.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(dominantColor.opacity(0.12))
                     .frame(width: 60, height: 60)
-                    .shadow(color: dominantColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
                 
                 FRAppIconView(app: app, size: 48)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
@@ -619,13 +575,13 @@ struct PremiumAppCard: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(app.name ?? String.localized("Unknown"))
                     .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 if let identifier = app.identifier {
                     Text(identifier)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
+                        .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
                 
@@ -665,56 +621,22 @@ struct PremiumAppCard: View {
                     .padding(.vertical, 10)
                     .background(
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: app.isSigned ? [.green, .green.opacity(0.8)] : [.cyan, .blue],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .fill(app.isSigned ? Color.green : Color.accentColor)
                     )
-                    .shadow(color: (app.isSigned ? Color.green : Color.cyan).opacity(0.4), radius: 8, x: 0, y: 4)
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
             .buttonStyle(.plain)
         }
         .padding(18)
         .background(
-            ZStack {
-                // Glassy dark gradient background
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color(red: 0.12, green: 0.18, blue: 0.35),
-                                Color(red: 0.08, green: 0.12, blue: 0.28)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                
-                // Inner highlight for glassy effect
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                .white.opacity(0.2),
-                                .white.opacity(0.05),
-                                .clear
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-                
-                // Subtle accent glow
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .fill(dominantColor.opacity(0.05))
-            }
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .fill(Color(.secondarySystemGroupedBackground))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
         )
-        .shadow(color: Color.black.opacity(0.3), radius: 12, x: 0, y: 8)
-        .shadow(color: dominantColor.opacity(0.1), radius: 16, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         .contentShape(Rectangle())
         .onTapGesture {
             selectedInfoAppPresenting = AnyApp(base: app)
