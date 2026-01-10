@@ -160,7 +160,7 @@ struct CertificatesAddView: View {
                     .frame(width: 36, height: 36)
                 Image(systemName: "tag.fill")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
             
             TextField("Nickname (Optional)", text: $_certificateName)
