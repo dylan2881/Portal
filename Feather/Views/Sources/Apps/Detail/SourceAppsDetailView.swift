@@ -107,32 +107,31 @@ struct SourceAppsDetailView: View {
 							_infoRow(title: .localized("Updated"), value: DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none), icon: "calendar")
 						}
 						
-						if let bundleId = app.id {
-							_infoRow(title: .localized("Bundle ID"), value: bundleId, icon: "barcode")
+							if let bundleId = app.id {
+								_infoRow(title: .localized("Bundle ID"), value: bundleId, icon: "barcode")
+							}
 						}
-					}
-					.padding()
-					.background(
-						RoundedRectangle(cornerRadius: 16, style: .continuous)
-							.fill(
-								LinearGradient(
-									colors: [
-										dominantColor.opacity(0.15),
-										dominantColor.opacity(0.05)
-									],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
+						.padding(.vertical, 12)
+						.padding(.horizontal, 16)
+						.background(
+							RoundedRectangle(cornerRadius: 14, style: .continuous)
+								.fill(Color(.secondarySystemGroupedBackground))
+								.overlay(
+									RoundedRectangle(cornerRadius: 14, style: .continuous)
+										.stroke(
+											LinearGradient(
+												colors: [dominantColor.opacity(0.3), dominantColor.opacity(0.1)],
+												startPoint: .topLeading,
+												endPoint: .bottomTrailing
+											),
+											lineWidth: 2
+										)
 								)
-							)
-					)
-					.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-					.overlay(
-						RoundedRectangle(cornerRadius: 16, style: .continuous)
-							.stroke(dominantColor.opacity(0.25), lineWidth: 1.5)
-					)
-				}
-				
-				// Permissions section
+						)
+						.shadow(color: dominantColor.opacity(0.15), radius: 8, x: 0, y: 4)
+					}
+					
+					// Permissions section
 				if let appPermissions = app.appPermissions {
 					NBSection(.localized("Permissions")) {
 						NavigationLink(destination: PermissionsView(appPermissions: appPermissions, dominantColor: dominantColor)) {

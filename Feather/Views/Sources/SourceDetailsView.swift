@@ -45,8 +45,8 @@ struct SourceDetailsView: View {
             // Gradient background based on source icon color
             LinearGradient(
                 colors: [
-                    dominantColor.opacity(0.15),
-                    dominantColor.opacity(0.05),
+                    dominantColor.opacity(0.25),
+                    dominantColor.opacity(0.12),
                     Color(.systemBackground)
                 ],
                 startPoint: .topLeading,
@@ -451,15 +451,7 @@ struct SourceDetailsView: View {
                 .foregroundStyle(.white.opacity(0.4))
         }
         .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .contentShape(Rectangle())
     }
     
     // MARK: - Empty Apps State

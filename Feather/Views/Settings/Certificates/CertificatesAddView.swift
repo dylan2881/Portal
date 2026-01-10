@@ -62,24 +62,26 @@ struct CertificatesAddView: View {
     // MARK: - File Import Section
     private var fileImportSection: some View {
         VStack(spacing: 12) {
-            compactImportCard(
-                title: "P12 Certificate",
-                subtitle: _p12URL?.lastPathComponent ?? "Tap to select",
-                icon: "key.fill",
-                isSelected: _p12URL != nil,
-                color: .orange
-            ) {
-                _isImportingP12Presenting = true
-            }
-            
-            compactImportCard(
-                title: "Provisioning Profile",
-                subtitle: _provisionURL?.lastPathComponent ?? "Tap to select",
-                icon: "doc.badge.gearshape.fill",
-                isSelected: _provisionURL != nil,
-                color: .blue
-            ) {
-                _isImportingMobileProvisionPresenting = true
+            HStack(spacing: 10) {
+                compactImportCard(
+                    title: "P12",
+                    subtitle: _p12URL?.lastPathComponent ?? "Select",
+                    icon: "key.fill",
+                    isSelected: _p12URL != nil,
+                    color: .orange
+                ) {
+                    _isImportingP12Presenting = true
+                }
+                
+                compactImportCard(
+                    title: "Provision",
+                    subtitle: _provisionURL?.lastPathComponent ?? "Select",
+                    icon: "doc.badge.gearshape.fill",
+                    isSelected: _provisionURL != nil,
+                    color: .blue
+                ) {
+                    _isImportingMobileProvisionPresenting = true
+                }
             }
             
             zipImportButton
@@ -253,7 +255,7 @@ struct CertificatesAddView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
@@ -264,9 +266,9 @@ struct CertificatesAddView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 48, height: 48)
+                        .frame(width: 40, height: 40)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
                                 .stroke(
                                     isSelected ? Color.green.opacity(0.3) : color.opacity(0.3),
                                     lineWidth: 1.5
@@ -274,18 +276,18 @@ struct CertificatesAddView: View {
                         )
                     
                     Image(systemName: isSelected ? "checkmark.circle.fill" : icon)
-                        .font(.system(size: 20, weight: .bold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(isSelected ? .green : color)
                         .shadow(color: isSelected ? .green.opacity(0.3) : color.opacity(0.3), radius: 2, x: 0, y: 1)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(isSelected ? .secondary : .primary)
                     
                     Text(subtitle)
-                        .font(.system(size: 12, weight: .medium))
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(isSelected ? .green : .secondary)
                         .lineLimit(1)
                 }
@@ -298,7 +300,7 @@ struct CertificatesAddView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .padding(16)
+            .padding(12)
             .background(
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)

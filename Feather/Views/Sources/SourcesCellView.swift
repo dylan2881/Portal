@@ -111,26 +111,9 @@ struct SourcesCellView: View {
 					)
 			}
 		}
-		.padding(.horizontal, 10)
-		.padding(.vertical, 8)
-		.background(
-			RoundedRectangle(cornerRadius: 10, style: .continuous)
-				.fill(
-					LinearGradient(
-						colors: [
-							dominantColor.opacity(0.08),
-							dominantColor.opacity(0.04)
-						],
-						startPoint: .topLeading,
-						endPoint: .bottomTrailing
-					)
-				)
-		)
-		.overlay(
-			RoundedRectangle(cornerRadius: 10, style: .continuous)
-				.stroke(dominantColor.opacity(0.15), lineWidth: 0.5)
-		)
-		.shadow(color: dominantColor.opacity(0.08), radius: 2, x: 0, y: 1)
+		.padding(.horizontal, 8)
+		.padding(.vertical, 6)
+		.contentShape(Rectangle())
 		.swipeActions(edge: .leading) {
 			Button {
 				viewModel.togglePin(for: source)
