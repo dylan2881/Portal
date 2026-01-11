@@ -209,7 +209,8 @@ struct ModernImportURLView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-            .navigationBarHidden(true)
+                .navigationBarHidden(true)
+            }
         }
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {

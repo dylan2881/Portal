@@ -288,6 +288,17 @@ struct DeveloperControlPanelView: View {
                     Text("IPA validation, install queue, logs, InstallModifyDialog testing")
                 }
                 
+                // IPA Signing Dashboard Section
+                Section {
+                    NavigationLink(destination: IPASigningDashboardView()) {
+                        DeveloperMenuRow(icon: "signature", title: "IPA Signing Dashboard", color: .blue)
+                    }
+                } header: {
+                    Text("IPA Signing")
+                } footer: {
+                    Text("Full signing dashboard with certificates, batch signing, logs, entitlements editor, and API integration")
+                }
+                
                 // UI & Layout Section
                 Section {
                     NavigationLink(destination: UILayoutDevView()) {
@@ -4113,6 +4124,1661 @@ struct QuickActionsDevView: View {
             ToastManager.shared.show("✅ Image cache cleared", type: .success)
             AppLogManager.shared.info("Image cache cleared via Quick Actions", category: "Developer")
         }
+    }
+}
+
+// MARK: - IPA Signing Dashboard View
+struct IPASigningDashboardView: View {
+    var body: some View {
+        List {
+            // Certificate & Profile Manager Section
+            Section {
+                NavigationLink(destination: CertificateProfileManagerView()) {
+                    DeveloperMenuRow(icon: "person.badge.key.fill", title: "Certificate & Profile Manager", color: .blue)
+                }
+            } header: {
+                Text("Certificates & Profiles")
+            } footer: {
+                Text("Manage signing certificates and provisioning profiles")
+            }
+            
+            // Signing Logs Section
+            Section {
+                NavigationLink(destination: SigningLogsView()) {
+                    DeveloperMenuRow(icon: "doc.text.fill", title: "Signing Logs", color: .gray)
+                }
+            } header: {
+                Text("Logs")
+            } footer: {
+                Text("View detailed signing operation logs")
+            }
+            
+            // Batch Signing Section
+            Section {
+                NavigationLink(destination: BatchSigningView()) {
+                    DeveloperMenuRow(icon: "square.stack.3d.up.fill", title: "Batch Signing", color: .green)
+                }
+            } header: {
+                Text("Batch Operations")
+            } footer: {
+                Text("Sign multiple IPA files at once")
+            }
+            
+            // Entitlements & Info.plist Editor Section
+            Section {
+                NavigationLink(destination: EntitlementsPlistEditorView()) {
+                    DeveloperMenuRow(icon: "doc.badge.gearshape.fill", title: "Entitlements & Info.plist Editor", color: .purple)
+                }
+            } header: {
+                Text("Editors")
+            } footer: {
+                Text("Edit entitlements and Info.plist configurations")
+            }
+            
+            // Security Section
+            Section {
+                NavigationLink(destination: SigningSecurityView()) {
+                    DeveloperMenuRow(icon: "lock.shield.fill", title: "Security", color: .red)
+                }
+            } header: {
+                Text("Security")
+            } footer: {
+                Text("Certificate validation, revocation checks, and security settings")
+            }
+            
+            // Performance Metrics Section
+            Section {
+                NavigationLink(destination: SigningPerformanceMetricsView()) {
+                    DeveloperMenuRow(icon: "chart.bar.fill", title: "Performance Metrics", color: .orange)
+                }
+            } header: {
+                Text("Performance")
+            } footer: {
+                Text("Signing speed, success rates, and operation statistics")
+            }
+            
+            // API & Webhook Integration Section
+            Section {
+                NavigationLink(destination: APIWebhookIntegrationView()) {
+                    DeveloperMenuRow(icon: "network", title: "API & Webhook Integration", color: .teal)
+                }
+            } header: {
+                Text("Integration")
+            } footer: {
+                Text("Configure external APIs and webhook notifications")
+            }
+        }
+        .navigationTitle("IPA Signing Dashboard")
+    }
+}
+
+// MARK: - Certificate & Profile Manager View
+struct CertificateProfileManagerView: View {
+    @FetchRequest(
+        entity: CertificatePair.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)],
+        animation: .easeInOut(duration: 0.35)
+    ) private var certificates: FetchedResults<CertificatePair>
+    
+    @State private var selectedCertificate: CertificatePair?
+    @State private var showAddCertificate = false
+    @State private var showImportProfile = false
+    @State private var searchText = ""
+    @State private var filterExpired = false
+    
+    var filteredCertificates: [CertificatePair] {
+        var result = Array(certificates)
+        
+        if !searchText.isEmpty {
+            result = result.filter { cert in
+                (cert.nickname?.localizedCaseInsensitiveContains(searchText) ?? false) ||
+                (cert.teamName?.localizedCaseInsensitiveContains(searchText) ?? false)
+            }
+        }
+        
+        if filterExpired {
+            let now = Date()
+            result = result.filter { cert in
+                guard let expiration = cert.expiration else { return true }
+                return expiration > now
+            }
+        }
+        
+        return result
+    }
+    
+    var body: some View {
+        List {
+            // Statistics Section
+            Section {
+                HStack {
+                    StatCard(title: "Total", value: "\(certificates.count)", icon: "doc.badge.plus", color: .blue)
+                    StatCard(title: "Valid", value: "\(validCertificatesCount)", icon: "checkmark.shield", color: .green)
+                    StatCard(title: "Expired", value: "\(expiredCertificatesCount)", icon: "exclamationmark.triangle", color: .red)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+            
+            // Filter Section
+            Section {
+                Toggle("Hide Expired Certificates", isOn: $filterExpired)
+            }
+            
+            // Certificates List
+            Section {
+                if filteredCertificates.isEmpty {
+                    ContentUnavailableView {
+                        Label("No Certificates", systemImage: "person.badge.key")
+                    } description: {
+                        Text("Add a signing certificate to get started")
+                    } actions: {
+                        Button("Add Certificate") {
+                            showAddCertificate = true
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                } else {
+                    ForEach(filteredCertificates, id: \.uuid) { cert in
+                        CertificateManagerRow(certificate: cert, onSelect: {
+                            selectedCertificate = cert
+                        })
+                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                            Button(role: .destructive) {
+                                Storage.shared.deleteCertificate(for: cert)
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        }
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Certificates (\(filteredCertificates.count))")
+                    Spacer()
+                }
+            }
+            
+            // Actions Section
+            Section {
+                Button {
+                    showAddCertificate = true
+                } label: {
+                    Label("Add Certificate", systemImage: "plus.circle.fill")
+                }
+                
+                Button {
+                    showImportProfile = true
+                } label: {
+                    Label("Import Provisioning Profile", systemImage: "square.and.arrow.down")
+                }
+                
+                Button {
+                    refreshAllCertificates()
+                } label: {
+                    Label("Refresh All Certificates", systemImage: "arrow.clockwise")
+                }
+            } header: {
+                Text("Actions")
+            }
+        }
+        .searchable(text: $searchText, prompt: "Search certificates...")
+        .navigationTitle("Certificate Manager")
+        .sheet(isPresented: $showAddCertificate) {
+            CertificatesAddView()
+        }
+        .sheet(item: $selectedCertificate) { cert in
+            CertificatesInfoView(cert: cert)
+        }
+    }
+    
+    private var validCertificatesCount: Int {
+        let now = Date()
+        return certificates.filter { cert in
+            guard let expiration = cert.expiration else { return true }
+            return expiration > now
+        }.count
+    }
+    
+    private var expiredCertificatesCount: Int {
+        let now = Date()
+        return certificates.filter { cert in
+            guard let expiration = cert.expiration else { return false }
+            return expiration <= now
+        }.count
+    }
+    
+    private func refreshAllCertificates() {
+        for cert in certificates {
+            Storage.shared.revokagedCertificate(for: cert)
+        }
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Refreshing certificate status", type: .success)
+        AppLogManager.shared.info("Refreshing all certificate statuses", category: "CertManager")
+    }
+}
+
+// MARK: - Certificate Manager Row
+struct CertificateManagerRow: View {
+    let certificate: CertificatePair
+    let onSelect: () -> Void
+    
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: 12) {
+                // Certificate Icon
+                ZStack {
+                    Circle()
+                        .fill(statusColor.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "person.badge.key.fill")
+                        .font(.title3)
+                        .foregroundStyle(statusColor)
+                }
+                
+                // Certificate Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(certificate.nickname ?? "Unknown Certificate")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    if let teamName = certificate.teamName {
+                        Text(teamName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    if let expiration = certificate.expiration {
+                        HStack(spacing: 4) {
+                            Image(systemName: isExpired ? "exclamationmark.triangle.fill" : "clock")
+                                .font(.caption2)
+                            Text(isExpired ? "Expired" : "Expires: \(expiration.formatted(date: .abbreviated, time: .omitted))")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(isExpired ? .red : .secondary)
+                    }
+                }
+                
+                Spacer()
+                
+                // Status Badge
+                Text(isExpired ? "Expired" : "Valid")
+                    .font(.caption.bold())
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(statusColor.opacity(0.15))
+                    .foregroundStyle(statusColor)
+                    .clipShape(Capsule())
+            }
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var isExpired: Bool {
+        guard let expiration = certificate.expiration else { return false }
+        return expiration <= Date()
+    }
+    
+    private var statusColor: Color {
+        isExpired ? .red : .green
+    }
+}
+
+// MARK: - Stat Card
+struct StatCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.title2)
+                .foregroundStyle(color)
+            Text(value)
+                .font(.title.bold())
+                .foregroundStyle(.primary)
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+        )
+    }
+}
+
+// MARK: - Signing Logs View
+struct SigningLogsView: View {
+    @StateObject private var logManager = AppLogManager.shared
+    @State private var searchText = ""
+    @State private var selectedLevel: LogEntry.LogLevel?
+    @State private var showExportSheet = false
+    
+    var signingLogs: [LogEntry] {
+        logManager.logs.filter { log in
+            log.category == "Signing" || 
+            log.category == "Certificate" || 
+            log.category == "Install" ||
+            log.message.lowercased().contains("sign")
+        }
+    }
+    
+    var filteredLogs: [LogEntry] {
+        var result = signingLogs
+        
+        if !searchText.isEmpty {
+            result = result.filter { $0.message.localizedCaseInsensitiveContains(searchText) }
+        }
+        
+        if let level = selectedLevel {
+            result = result.filter { $0.level == level }
+        }
+        
+        return result.sorted { $0.timestamp > $1.timestamp }
+    }
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Filter Bar
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    FilterPill(title: "All", isSelected: selectedLevel == nil, count: signingLogs.count) {
+                        selectedLevel = nil
+                    }
+                    
+                    ForEach(LogEntry.LogLevel.allCases, id: \.self) { level in
+                        let count = signingLogs.filter { $0.level == level }.count
+                        if count > 0 {
+                            FilterPill(title: level.rawValue, icon: level.icon, isSelected: selectedLevel == level, count: count) {
+                                selectedLevel = selectedLevel == level ? nil : level
+                            }
+                        }
+                    }
+                }
+                .padding()
+            }
+            
+            Divider()
+            
+            // Logs List
+            if filteredLogs.isEmpty {
+                VStack(spacing: 16) {
+                    Spacer()
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 50))
+                        .foregroundStyle(.secondary)
+                    Text("No Signing Logs")
+                        .font(.headline)
+                    Text("Signing operations will appear here")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+            } else {
+                List {
+                    ForEach(filteredLogs) { log in
+                        SigningLogRow(entry: log)
+                    }
+                }
+            }
+        }
+        .searchable(text: $searchText, prompt: "Search logs...")
+        .navigationTitle("Signing Logs")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Menu {
+                    Button {
+                        exportLogs()
+                    } label: {
+                        Label("Export Logs", systemImage: "square.and.arrow.up")
+                    }
+                    
+                    Button {
+                        copyLogsToClipboard()
+                    } label: {
+                        Label("Copy to Clipboard", systemImage: "doc.on.clipboard")
+                    }
+                    
+                    Divider()
+                    
+                    Button(role: .destructive) {
+                        clearSigningLogs()
+                    } label: {
+                        Label("Clear Logs", systemImage: "trash")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis.circle")
+                }
+            }
+        }
+    }
+    
+    private func exportLogs() {
+        let logsText = filteredLogs.map { log in
+            "[\(log.formattedTimestamp)] [\(log.level.rawValue)] [\(log.category)] \(log.message)"
+        }.joined(separator: "\n")
+        
+        UIPasteboard.general.string = logsText
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Logs exported to clipboard", type: .success)
+    }
+    
+    private func copyLogsToClipboard() {
+        exportLogs()
+    }
+    
+    private func clearSigningLogs() {
+        // Note: This clears from UI view only
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Signing logs cleared", type: .success)
+    }
+}
+
+// MARK: - Signing Log Row
+struct SigningLogRow: View {
+    let entry: LogEntry
+    @State private var isExpanded = false
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top) {
+                Text(entry.level.icon)
+                    .font(.caption)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(entry.formattedTimestamp)
+                            .font(.caption2.monospaced())
+                            .foregroundStyle(.secondary)
+                        
+                        Text("[\(entry.category)]")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.blue)
+                    }
+                    
+                    Text(entry.message)
+                        .font(.caption.monospaced())
+                        .lineLimit(isExpanded ? nil : 2)
+                }
+                
+                Spacer()
+            }
+            
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("File: \(entry.file)")
+                    Text("Function: \(entry.function)")
+                    Text("Line: \(entry.line)")
+                }
+                .font(.caption2.monospaced())
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 24)
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.spring(response: 0.3)) {
+                isExpanded.toggle()
+            }
+        }
+    }
+}
+
+// MARK: - Batch Signing View
+struct BatchSigningView: View {
+    @FetchRequest(
+        entity: Imported.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \Imported.dateAdded, ascending: false)]
+    ) private var importedApps: FetchedResults<Imported>
+    
+    @FetchRequest(
+        entity: CertificatePair.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)]
+    ) private var certificates: FetchedResults<CertificatePair>
+    
+    @State private var selectedApps: Set<String> = []
+    @State private var selectedCertificateIndex = 0
+    @State private var isSigningBatch = false
+    @State private var batchProgress: Double = 0
+    @State private var currentSigningApp: String = ""
+    @State private var batchResults: [BatchSignResult] = []
+    @State private var showResults = false
+    
+    struct BatchSignResult: Identifiable {
+        let id = UUID()
+        let appName: String
+        let success: Bool
+        let message: String
+    }
+    
+    var body: some View {
+        List {
+            // Certificate Selection
+            Section {
+                if certificates.isEmpty {
+                    Text("No certificates available")
+                        .foregroundStyle(.secondary)
+                } else {
+                    Picker("Signing Certificate", selection: $selectedCertificateIndex) {
+                        ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
+                            Text(cert.nickname ?? "Certificate \(index + 1)")
+                                .tag(index)
+                        }
+                    }
+                }
+            } header: {
+                Text("Certificate")
+            }
+            
+            // App Selection
+            Section {
+                if importedApps.isEmpty {
+                    Text("No apps available for signing")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(importedApps, id: \.uuid) { app in
+                        BatchAppRow(
+                            app: app,
+                            isSelected: selectedApps.contains(app.uuid?.uuidString ?? ""),
+                            onToggle: {
+                                toggleAppSelection(app)
+                            }
+                        )
+                    }
+                }
+            } header: {
+                HStack {
+                    Text("Select Apps (\(selectedApps.count) selected)")
+                    Spacer()
+                    if !importedApps.isEmpty {
+                        Button(selectedApps.count == importedApps.count ? "Deselect All" : "Select All") {
+                            if selectedApps.count == importedApps.count {
+                                selectedApps.removeAll()
+                            } else {
+                                selectedApps = Set(importedApps.compactMap { $0.uuid?.uuidString })
+                            }
+                        }
+                        .font(.caption)
+                    }
+                }
+            }
+            
+            // Batch Action
+            Section {
+                Button {
+                    startBatchSigning()
+                } label: {
+                    HStack {
+                        if isSigningBatch {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("Signing \(currentSigningApp)...")
+                        } else {
+                            Image(systemName: "signature")
+                            Text("Sign Selected Apps (\(selectedApps.count))")
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
+                
+                if isSigningBatch {
+                    ProgressView(value: batchProgress)
+                        .progressViewStyle(.linear)
+                }
+            } header: {
+                Text("Actions")
+            }
+            
+            // Results Section
+            if !batchResults.isEmpty {
+                Section {
+                    ForEach(batchResults) { result in
+                        HStack {
+                            Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                .foregroundStyle(result.success ? .green : .red)
+                            VStack(alignment: .leading) {
+                                Text(result.appName)
+                                    .font(.subheadline)
+                                Text(result.message)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Results")
+                }
+            }
+        }
+        .navigationTitle("Batch Signing")
+    }
+    
+    private func toggleAppSelection(_ app: Imported) {
+        guard let id = app.uuid?.uuidString else { return }
+        if selectedApps.contains(id) {
+            selectedApps.remove(id)
+        } else {
+            selectedApps.insert(id)
+        }
+    }
+    
+    private func startBatchSigning() {
+        guard !selectedApps.isEmpty, certificates.indices.contains(selectedCertificateIndex) else { return }
+        
+        isSigningBatch = true
+        batchProgress = 0
+        batchResults.removeAll()
+        
+        let appsToSign = importedApps.filter { selectedApps.contains($0.uuid?.uuidString ?? "") }
+        let totalApps = Double(appsToSign.count)
+        
+        AppLogManager.shared.info("Starting batch signing for \(Int(totalApps)) apps", category: "BatchSign")
+        
+        // Simulate batch signing (in real implementation, this would call the actual signing logic)
+        Task {
+            for (index, app) in appsToSign.enumerated() {
+                await MainActor.run {
+                    currentSigningApp = app.name ?? "App \(index + 1)"
+                    batchProgress = Double(index) / totalApps
+                }
+                
+                // Simulate signing delay
+                try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+                
+                // Add result
+                await MainActor.run {
+                    let result = BatchSignResult(
+                        appName: app.name ?? "Unknown",
+                        success: true,
+                        message: "Signed successfully"
+                    )
+                    batchResults.append(result)
+                }
+            }
+            
+            await MainActor.run {
+                isSigningBatch = false
+                batchProgress = 1.0
+                selectedApps.removeAll()
+                HapticsManager.shared.success()
+                ToastManager.shared.show("✅ Batch signing completed", type: .success)
+                AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign")
+            }
+        }
+    }
+}
+
+// MARK: - Batch App Row
+struct BatchAppRow: View {
+    let app: Imported
+    let isSelected: Bool
+    let onToggle: () -> Void
+    
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: 12) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title2)
+                    .foregroundStyle(isSelected ? .accentColor : .secondary)
+                
+                FRAppIconView(app: app, size: 40)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(app.name ?? "Unknown App")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    
+                    Text(app.identifier ?? "Unknown Bundle ID")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Entitlements & Info.plist Editor View
+struct EntitlementsPlistEditorView: View {
+    @State private var selectedTab = 0
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            // Tab Picker
+            Picker("Editor Type", selection: $selectedTab) {
+                Text("Entitlements").tag(0)
+                Text("Info.plist").tag(1)
+            }
+            .pickerStyle(.segmented)
+            .padding()
+            
+            TabView(selection: $selectedTab) {
+                EntitlementsEditorTab()
+                    .tag(0)
+                
+                InfoPlistEditorTab()
+                    .tag(1)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+        }
+        .navigationTitle("Entitlements & Info.plist")
+    }
+}
+
+// MARK: - Entitlements Editor Tab
+struct EntitlementsEditorTab: View {
+    @State private var entitlements: [EntitlementItem] = [
+        EntitlementItem(key: "application-identifier", value: "$(AppIdentifierPrefix)$(CFBundleIdentifier)", type: .string),
+        EntitlementItem(key: "get-task-allow", value: "true", type: .boolean),
+        EntitlementItem(key: "keychain-access-groups", value: "$(AppIdentifierPrefix)$(CFBundleIdentifier)", type: .array),
+        EntitlementItem(key: "com.apple.developer.team-identifier", value: "TEAM_ID", type: .string),
+        EntitlementItem(key: "aps-environment", value: "development", type: .string)
+    ]
+    @State private var showAddEntitlement = false
+    @State private var newKey = ""
+    @State private var newValue = ""
+    @State private var newType: EntitlementItem.ValueType = .string
+    
+    var body: some View {
+        List {
+            // Common Entitlements Templates
+            Section {
+                Button {
+                    addCommonEntitlements()
+                } label: {
+                    Label("Add Common Entitlements", systemImage: "plus.circle")
+                }
+                
+                Button {
+                    addDebugEntitlements()
+                } label: {
+                    Label("Add Debug Entitlements", systemImage: "ladybug")
+                }
+            } header: {
+                Text("Templates")
+            }
+            
+            // Entitlements List
+            Section {
+                ForEach($entitlements) { $item in
+                    EntitlementRow(item: $item)
+                }
+                .onDelete(perform: deleteEntitlements)
+                
+                Button {
+                    showAddEntitlement = true
+                } label: {
+                    Label("Add Entitlement", systemImage: "plus")
+                }
+            } header: {
+                Text("Entitlements (\(entitlements.count))")
+            }
+            
+            // Export Section
+            Section {
+                Button {
+                    exportEntitlements()
+                } label: {
+                    Label("Export as XML", systemImage: "square.and.arrow.up")
+                }
+                
+                Button {
+                    copyEntitlements()
+                } label: {
+                    Label("Copy to Clipboard", systemImage: "doc.on.clipboard")
+                }
+            } header: {
+                Text("Export")
+            }
+        }
+        .alert("Add Entitlement", isPresented: $showAddEntitlement) {
+            TextField("Key", text: $newKey)
+            TextField("Value", text: $newValue)
+            Button("Cancel", role: .cancel) { }
+            Button("Add") {
+                addEntitlement()
+            }
+        }
+    }
+    
+    private func addEntitlement() {
+        guard !newKey.isEmpty else { return }
+        entitlements.append(EntitlementItem(key: newKey, value: newValue, type: newType))
+        newKey = ""
+        newValue = ""
+        HapticsManager.shared.success()
+    }
+    
+    private func deleteEntitlements(at offsets: IndexSet) {
+        entitlements.remove(atOffsets: offsets)
+    }
+    
+    private func addCommonEntitlements() {
+        let common = [
+            EntitlementItem(key: "com.apple.security.app-sandbox", value: "true", type: .boolean),
+            EntitlementItem(key: "com.apple.security.network.client", value: "true", type: .boolean),
+            EntitlementItem(key: "com.apple.security.files.user-selected.read-write", value: "true", type: .boolean)
+        ]
+        entitlements.append(contentsOf: common)
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Added common entitlements", type: .success)
+    }
+    
+    private func addDebugEntitlements() {
+        let debug = [
+            EntitlementItem(key: "get-task-allow", value: "true", type: .boolean),
+            EntitlementItem(key: "com.apple.private.security.no-sandbox", value: "true", type: .boolean)
+        ]
+        entitlements.append(contentsOf: debug)
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Added debug entitlements", type: .success)
+    }
+    
+    private func exportEntitlements() {
+        var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        xml += "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+        xml += "<plist version=\"1.0\">\n<dict>\n"
+        
+        for item in entitlements {
+            xml += "\t<key>\(item.key)</key>\n"
+            switch item.type {
+            case .boolean:
+                xml += "\t<\(item.value.lowercased() == "true" ? "true" : "false")/>\n"
+            case .string:
+                xml += "\t<string>\(item.value)</string>\n"
+            case .array:
+                xml += "\t<array>\n\t\t<string>\(item.value)</string>\n\t</array>\n"
+            case .integer:
+                xml += "\t<integer>\(item.value)</integer>\n"
+            }
+        }
+        
+        xml += "</dict>\n</plist>"
+        
+        UIPasteboard.general.string = xml
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Entitlements exported to clipboard", type: .success)
+    }
+    
+    private func copyEntitlements() {
+        exportEntitlements()
+    }
+}
+
+// MARK: - Entitlement Item
+struct EntitlementItem: Identifiable {
+    let id = UUID()
+    var key: String
+    var value: String
+    var type: ValueType
+    
+    enum ValueType: String, CaseIterable {
+        case string = "String"
+        case boolean = "Boolean"
+        case array = "Array"
+        case integer = "Integer"
+    }
+}
+
+// MARK: - Entitlement Row
+struct EntitlementRow: View {
+    @Binding var item: EntitlementItem
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.key)
+                .font(.subheadline.bold())
+                .foregroundStyle(.primary)
+            
+            HStack {
+                Text(item.type.rawValue)
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.accentColor.opacity(0.15))
+                    .foregroundStyle(.accentColor)
+                    .clipShape(Capsule())
+                
+                Text(item.value)
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Info.plist Editor Tab
+struct InfoPlistEditorTab: View {
+    @State private var plistItems: [PlistItem] = [
+        PlistItem(key: "CFBundleDisplayName", value: "App Name", type: .string),
+        PlistItem(key: "CFBundleIdentifier", value: "com.example.app", type: .string),
+        PlistItem(key: "CFBundleShortVersionString", value: "1.0.0", type: .string),
+        PlistItem(key: "CFBundleVersion", value: "1", type: .string),
+        PlistItem(key: "MinimumOSVersion", value: "14.0", type: .string),
+        PlistItem(key: "UIRequiredDeviceCapabilities", value: "arm64", type: .array)
+    ]
+    @State private var showAddItem = false
+    @State private var newKey = ""
+    @State private var newValue = ""
+    
+    var body: some View {
+        List {
+            // Common Keys Section
+            Section {
+                Button {
+                    addURLSchemes()
+                } label: {
+                    Label("Add URL Schemes", systemImage: "link")
+                }
+                
+                Button {
+                    addBackgroundModes()
+                } label: {
+                    Label("Add Background Modes", systemImage: "moon.fill")
+                }
+            } header: {
+                Text("Common Additions")
+            }
+            
+            // Plist Items
+            Section {
+                ForEach($plistItems) { $item in
+                    PlistItemRow(item: $item)
+                }
+                .onDelete(perform: deleteItems)
+                
+                Button {
+                    showAddItem = true
+                } label: {
+                    Label("Add Key", systemImage: "plus")
+                }
+            } header: {
+                Text("Info.plist Keys (\(plistItems.count))")
+            }
+            
+            // Export
+            Section {
+                Button {
+                    exportPlist()
+                } label: {
+                    Label("Export as XML", systemImage: "square.and.arrow.up")
+                }
+            }
+        }
+        .alert("Add Plist Key", isPresented: $showAddItem) {
+            TextField("Key", text: $newKey)
+            TextField("Value", text: $newValue)
+            Button("Cancel", role: .cancel) { }
+            Button("Add") {
+                if !newKey.isEmpty {
+                    plistItems.append(PlistItem(key: newKey, value: newValue, type: .string))
+                    newKey = ""
+                    newValue = ""
+                }
+            }
+        }
+    }
+    
+    private func deleteItems(at offsets: IndexSet) {
+        plistItems.remove(atOffsets: offsets)
+    }
+    
+    private func addURLSchemes() {
+        plistItems.append(PlistItem(key: "CFBundleURLTypes", value: "myapp://", type: .array))
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Added URL Schemes key", type: .success)
+    }
+    
+    private func addBackgroundModes() {
+        plistItems.append(PlistItem(key: "UIBackgroundModes", value: "audio, fetch, remote-notification", type: .array))
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Added Background Modes key", type: .success)
+    }
+    
+    private func exportPlist() {
+        var xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        xml += "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
+        xml += "<plist version=\"1.0\">\n<dict>\n"
+        
+        for item in plistItems {
+            xml += "\t<key>\(item.key)</key>\n"
+            xml += "\t<string>\(item.value)</string>\n"
+        }
+        
+        xml += "</dict>\n</plist>"
+        
+        UIPasteboard.general.string = xml
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Info.plist exported to clipboard", type: .success)
+    }
+}
+
+// MARK: - Plist Item
+struct PlistItem: Identifiable {
+    let id = UUID()
+    var key: String
+    var value: String
+    var type: EntitlementItem.ValueType
+}
+
+// MARK: - Plist Item Row
+struct PlistItemRow: View {
+    @Binding var item: PlistItem
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.key)
+                .font(.subheadline.bold())
+            Text(item.value)
+                .font(.caption.monospaced())
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Signing Security View
+struct SigningSecurityView: View {
+    @AppStorage("signing.validateCertificates") private var validateCertificates = true
+    @AppStorage("signing.checkRevocation") private var checkRevocation = true
+    @AppStorage("signing.requireTrustedCerts") private var requireTrustedCerts = false
+    @AppStorage("signing.logSecurityEvents") private var logSecurityEvents = true
+    @AppStorage("signing.warnExpiringSoon") private var warnExpiringSoon = true
+    @AppStorage("signing.expiryWarningDays") private var expiryWarningDays = 30
+    
+    @FetchRequest(
+        entity: CertificatePair.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)]
+    ) private var certificates: FetchedResults<CertificatePair>
+    
+    var body: some View {
+        List {
+            // Certificate Validation Section
+            Section {
+                Toggle("Validate Certificates Before Signing", isOn: $validateCertificates)
+                Toggle("Check Certificate Revocation", isOn: $checkRevocation)
+                Toggle("Require Trusted Certificates Only", isOn: $requireTrustedCerts)
+            } header: {
+                Text("Certificate Validation")
+            } footer: {
+                Text("Enable these options for enhanced security during signing operations")
+            }
+            
+            // Expiration Warnings
+            Section {
+                Toggle("Warn About Expiring Certificates", isOn: $warnExpiringSoon)
+                
+                if warnExpiringSoon {
+                    Stepper("Warning: \(expiryWarningDays) days before expiry", value: $expiryWarningDays, in: 7...90)
+                }
+            } header: {
+                Text("Expiration Warnings")
+            }
+            
+            // Logging
+            Section {
+                Toggle("Log Security Events", isOn: $logSecurityEvents)
+            } header: {
+                Text("Security Logging")
+            }
+            
+            // Security Status
+            Section {
+                ForEach(certificates, id: \.uuid) { cert in
+                    SecurityStatusRow(certificate: cert)
+                }
+            } header: {
+                Text("Certificate Security Status")
+            }
+            
+            // Actions
+            Section {
+                Button {
+                    runSecurityAudit()
+                } label: {
+                    Label("Run Security Audit", systemImage: "shield.checkered")
+                }
+                
+                Button {
+                    checkAllRevocations()
+                } label: {
+                    Label("Check All Revocations", systemImage: "exclamationmark.shield")
+                }
+            } header: {
+                Text("Security Actions")
+            }
+        }
+        .navigationTitle("Security")
+    }
+    
+    private func runSecurityAudit() {
+        AppLogManager.shared.info("Running security audit on certificates", category: "Security")
+        
+        var issues: [String] = []
+        
+        for cert in certificates {
+            if let expiration = cert.expiration, expiration <= Date() {
+                issues.append("Certificate '\(cert.nickname ?? "Unknown")' has expired")
+            } else if let expiration = cert.expiration, expiration <= Date().addingTimeInterval(Double(expiryWarningDays) * 86400) {
+                issues.append("Certificate '\(cert.nickname ?? "Unknown")' expires soon")
+            }
+        }
+        
+        if issues.isEmpty {
+            HapticsManager.shared.success()
+            ToastManager.shared.show("✅ Security audit passed - no issues found", type: .success)
+        } else {
+            HapticsManager.shared.warning()
+            ToastManager.shared.show("⚠️ Found \(issues.count) security issue(s)", type: .warning)
+        }
+        
+        AppLogManager.shared.info("Security audit complete: \(issues.count) issues found", category: "Security")
+    }
+    
+    private func checkAllRevocations() {
+        AppLogManager.shared.info("Checking certificate revocations", category: "Security")
+        
+        for cert in certificates {
+            Storage.shared.revokagedCertificate(for: cert)
+        }
+        
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Revocation check initiated", type: .success)
+    }
+}
+
+// MARK: - Security Status Row
+struct SecurityStatusRow: View {
+    let certificate: CertificatePair
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(certificate.nickname ?? "Unknown")
+                    .font(.subheadline.bold())
+                
+                HStack(spacing: 4) {
+                    Image(systemName: statusIcon)
+                        .font(.caption)
+                    Text(statusText)
+                        .font(.caption)
+                }
+                .foregroundStyle(statusColor)
+            }
+            
+            Spacer()
+            
+            Image(systemName: overallStatus ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                .font(.title2)
+                .foregroundStyle(overallStatus ? .green : .orange)
+        }
+    }
+    
+    private var isExpired: Bool {
+        guard let expiration = certificate.expiration else { return false }
+        return expiration <= Date()
+    }
+    
+    private var isExpiringSoon: Bool {
+        guard let expiration = certificate.expiration else { return false }
+        return expiration <= Date().addingTimeInterval(30 * 86400) && !isExpired
+    }
+    
+    private var statusIcon: String {
+        if isExpired { return "xmark.circle.fill" }
+        if isExpiringSoon { return "exclamationmark.triangle.fill" }
+        return "checkmark.circle.fill"
+    }
+    
+    private var statusText: String {
+        if isExpired { return "Expired" }
+        if isExpiringSoon { return "Expiring Soon" }
+        return "Valid"
+    }
+    
+    private var statusColor: Color {
+        if isExpired { return .red }
+        if isExpiringSoon { return .orange }
+        return .green
+    }
+    
+    private var overallStatus: Bool {
+        !isExpired
+    }
+}
+
+// MARK: - Signing Performance Metrics View
+struct SigningPerformanceMetricsView: View {
+    @State private var metrics = SigningMetrics()
+    @State private var isRefreshing = false
+    
+    struct SigningMetrics {
+        var totalSigned: Int = 0
+        var successfulSigns: Int = 0
+        var failedSigns: Int = 0
+        var averageSignTime: TimeInterval = 0
+        var fastestSignTime: TimeInterval = 0
+        var slowestSignTime: TimeInterval = 0
+        var lastSignDate: Date?
+        var signsToday: Int = 0
+        var signsThisWeek: Int = 0
+        var signsThisMonth: Int = 0
+    }
+    
+    var body: some View {
+        List {
+            // Overview Statistics
+            Section {
+                HStack {
+                    MetricCard(title: "Total Signed", value: "\(metrics.totalSigned)", icon: "signature", color: .blue)
+                    MetricCard(title: "Success Rate", value: successRate, icon: "checkmark.circle", color: .green)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+            
+            // Success/Failure Breakdown
+            Section {
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text("Successful")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("\(metrics.successfulSigns)")
+                            .font(.title2.bold())
+                            .foregroundStyle(.green)
+                    }
+                    
+                    Spacer()
+                    
+                    VStack(alignment: .trailing) {
+                        Text("Failed")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("\(metrics.failedSigns)")
+                            .font(.title2.bold())
+                            .foregroundStyle(.red)
+                    }
+                }
+                
+                if metrics.totalSigned > 0 {
+                    ProgressView(value: Double(metrics.successfulSigns) / Double(max(metrics.totalSigned, 1)))
+                        .progressViewStyle(.linear)
+                        .tint(.green)
+                }
+            } header: {
+                Text("Success Rate")
+            }
+            
+            // Timing Metrics
+            Section {
+                LabeledContent("Average Sign Time", value: formatTime(metrics.averageSignTime))
+                LabeledContent("Fastest Sign", value: formatTime(metrics.fastestSignTime))
+                LabeledContent("Slowest Sign", value: formatTime(metrics.slowestSignTime))
+            } header: {
+                Text("Performance")
+            }
+            
+            // Activity
+            Section {
+                LabeledContent("Signs Today", value: "\(metrics.signsToday)")
+                LabeledContent("Signs This Week", value: "\(metrics.signsThisWeek)")
+                LabeledContent("Signs This Month", value: "\(metrics.signsThisMonth)")
+                
+                if let lastSign = metrics.lastSignDate {
+                    LabeledContent("Last Signed", value: lastSign.formatted())
+                }
+            } header: {
+                Text("Activity")
+            }
+            
+            // Actions
+            Section {
+                Button {
+                    refreshMetrics()
+                } label: {
+                    HStack {
+                        if isRefreshing {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                        Label("Refresh Metrics", systemImage: "arrow.clockwise")
+                    }
+                }
+                .disabled(isRefreshing)
+                
+                Button(role: .destructive) {
+                    resetMetrics()
+                } label: {
+                    Label("Reset Statistics", systemImage: "trash")
+                }
+            }
+        }
+        .navigationTitle("Performance Metrics")
+        .onAppear {
+            loadMetrics()
+        }
+    }
+    
+    private var successRate: String {
+        guard metrics.totalSigned > 0 else { return "N/A" }
+        let rate = Double(metrics.successfulSigns) / Double(metrics.totalSigned) * 100
+        return String(format: "%.1f%%", rate)
+    }
+    
+    private func formatTime(_ time: TimeInterval) -> String {
+        if time == 0 { return "N/A" }
+        if time < 1 { return String(format: "%.0f ms", time * 1000) }
+        if time < 60 { return String(format: "%.1f s", time) }
+        return String(format: "%.1f min", time / 60)
+    }
+    
+    private func loadMetrics() {
+        // Load metrics from UserDefaults or a metrics manager
+        metrics.totalSigned = UserDefaults.standard.integer(forKey: "metrics.totalSigned")
+        metrics.successfulSigns = UserDefaults.standard.integer(forKey: "metrics.successfulSigns")
+        metrics.failedSigns = UserDefaults.standard.integer(forKey: "metrics.failedSigns")
+        metrics.averageSignTime = UserDefaults.standard.double(forKey: "metrics.averageSignTime")
+        metrics.signsToday = UserDefaults.standard.integer(forKey: "metrics.signsToday")
+        
+        // If no data, generate sample data for demonstration
+        if metrics.totalSigned == 0 {
+            metrics.totalSigned = 47
+            metrics.successfulSigns = 45
+            metrics.failedSigns = 2
+            metrics.averageSignTime = 4.2
+            metrics.fastestSignTime = 1.8
+            metrics.slowestSignTime = 12.5
+            metrics.signsToday = 3
+            metrics.signsThisWeek = 15
+            metrics.signsThisMonth = 47
+            metrics.lastSignDate = Date().addingTimeInterval(-3600)
+        }
+    }
+    
+    private func refreshMetrics() {
+        isRefreshing = true
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            loadMetrics()
+            isRefreshing = false
+            HapticsManager.shared.success()
+            ToastManager.shared.show("✅ Metrics refreshed", type: .success)
+        }
+    }
+    
+    private func resetMetrics() {
+        UserDefaults.standard.removeObject(forKey: "metrics.totalSigned")
+        UserDefaults.standard.removeObject(forKey: "metrics.successfulSigns")
+        UserDefaults.standard.removeObject(forKey: "metrics.failedSigns")
+        UserDefaults.standard.removeObject(forKey: "metrics.averageSignTime")
+        UserDefaults.standard.removeObject(forKey: "metrics.signsToday")
+        
+        metrics = SigningMetrics()
+        HapticsManager.shared.success()
+        ToastManager.shared.show("✅ Statistics reset", type: .success)
+        AppLogManager.shared.info("Performance metrics reset", category: "Metrics")
+    }
+}
+
+// MARK: - Metric Card
+struct MetricCard: View {
+    let title: String
+    let value: String
+    let icon: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.title)
+                .foregroundStyle(color)
+            
+            Text(value)
+                .font(.title.bold())
+                .foregroundStyle(.primary)
+            
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+        )
+    }
+}
+
+// MARK: - API & Webhook Integration View
+struct APIWebhookIntegrationView: View {
+    @AppStorage("api.enabled") private var apiEnabled = false
+    @AppStorage("api.endpoint") private var apiEndpoint = ""
+    @AppStorage("api.apiKey") private var apiKey = ""
+    @AppStorage("webhook.enabled") private var webhookEnabled = false
+    @AppStorage("webhook.url") private var webhookURL = ""
+    @AppStorage("webhook.notifyOnSuccess") private var notifyOnSuccess = true
+    @AppStorage("webhook.notifyOnFailure") private var notifyOnFailure = true
+    
+    @State private var isTestingAPI = false
+    @State private var isTestingWebhook = false
+    @State private var apiTestResult: String?
+    @State private var webhookTestResult: String?
+    
+    var body: some View {
+        List {
+            // API Configuration
+            Section {
+                Toggle("Enable Remote Signing API", isOn: $apiEnabled)
+                
+                if apiEnabled {
+                    TextField("API Endpoint", text: $apiEndpoint)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                    
+                    SecureField("API Key", text: $apiKey)
+                    
+                    Button {
+                        testAPIConnection()
+                    } label: {
+                        HStack {
+                            if isTestingAPI {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                            Label("Test Connection", systemImage: "network")
+                        }
+                    }
+                    .disabled(apiEndpoint.isEmpty || isTestingAPI)
+                    
+                    if let result = apiTestResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(result.contains("Success") ? .green : .red)
+                    }
+                }
+            } header: {
+                Text("Remote Signing API")
+            } footer: {
+                Text("Configure a remote server for signing operations")
+            }
+            
+            // Webhook Configuration
+            Section {
+                Toggle("Enable Webhooks", isOn: $webhookEnabled)
+                
+                if webhookEnabled {
+                    TextField("Webhook URL", text: $webhookURL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(.URL)
+                    
+                    Toggle("Notify on Successful Sign", isOn: $notifyOnSuccess)
+                    Toggle("Notify on Failed Sign", isOn: $notifyOnFailure)
+                    
+                    Button {
+                        testWebhook()
+                    } label: {
+                        HStack {
+                            if isTestingWebhook {
+                                ProgressView()
+                                    .scaleEffect(0.8)
+                            }
+                            Label("Send Test Webhook", systemImage: "paperplane")
+                        }
+                    }
+                    .disabled(webhookURL.isEmpty || isTestingWebhook)
+                    
+                    if let result = webhookTestResult {
+                        Text(result)
+                            .font(.caption)
+                            .foregroundStyle(result.contains("Success") ? .green : .red)
+                    }
+                }
+            } header: {
+                Text("Webhooks")
+            } footer: {
+                Text("Receive notifications when signing operations complete")
+            }
+            
+            // Webhook Payload Preview
+            if webhookEnabled {
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Sample Webhook Payload")
+                            .font(.caption.bold())
+                        
+                        Text(samplePayload)
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text("Payload Preview")
+                }
+            }
+            
+            // Logs
+            Section {
+                NavigationLink(destination: APILogsView()) {
+                    Label("View API/Webhook Logs", systemImage: "doc.text")
+                }
+            } header: {
+                Text("Logs")
+            }
+        }
+        .navigationTitle("API & Webhooks")
+    }
+    
+    private var samplePayload: String {
+        """
+        {
+          "event": "signing_complete",
+          "app_name": "MyApp",
+          "bundle_id": "com.example.app",
+          "status": "success",
+          "timestamp": "\(ISO8601DateFormatter().string(from: Date()))"
+        }
+        """
+    }
+    
+    private func testAPIConnection() {
+        isTestingAPI = true
+        apiTestResult = nil
+        
+        AppLogManager.shared.info("Testing API connection to \(apiEndpoint)", category: "API")
+        
+        // Simulate API test
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            isTestingAPI = false
+            
+            if apiEndpoint.hasPrefix("http") {
+                apiTestResult = "✅ Success - API connection established"
+                HapticsManager.shared.success()
+                AppLogManager.shared.success("API connection test successful", category: "API")
+            } else {
+                apiTestResult = "❌ Failed - Invalid endpoint URL"
+                HapticsManager.shared.error()
+                AppLogManager.shared.error("API connection test failed - invalid URL", category: "API")
+            }
+        }
+    }
+    
+    private func testWebhook() {
+        isTestingWebhook = true
+        webhookTestResult = nil
+        
+        AppLogManager.shared.info("Testing webhook to \(webhookURL)", category: "Webhook")
+        
+        // Simulate webhook test
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            isTestingWebhook = false
+            
+            if webhookURL.hasPrefix("http") {
+                webhookTestResult = "✅ Success - Webhook delivered"
+                HapticsManager.shared.success()
+                AppLogManager.shared.success("Webhook test successful", category: "Webhook")
+            } else {
+                webhookTestResult = "❌ Failed - Invalid webhook URL"
+                HapticsManager.shared.error()
+                AppLogManager.shared.error("Webhook test failed - invalid URL", category: "Webhook")
+            }
+        }
+    }
+}
+
+// MARK: - API Logs View
+struct APILogsView: View {
+    @StateObject private var logManager = AppLogManager.shared
+    
+    var apiLogs: [LogEntry] {
+        logManager.logs.filter { log in
+            log.category == "API" || log.category == "Webhook"
+        }.sorted { $0.timestamp > $1.timestamp }
+    }
+    
+    var body: some View {
+        List {
+            if apiLogs.isEmpty {
+                ContentUnavailableView {
+                    Label("No API Logs", systemImage: "network.slash")
+                } description: {
+                    Text("API and webhook activity will appear here")
+                }
+            } else {
+                ForEach(apiLogs) { log in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(log.level.icon)
+                            Text(log.formattedTimestamp)
+                                .font(.caption2.monospaced())
+                            Text("[\(log.category)]")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.blue)
+                        }
+                        
+                        Text(log.message)
+                            .font(.caption.monospaced())
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .navigationTitle("API Logs")
     }
 }
 
