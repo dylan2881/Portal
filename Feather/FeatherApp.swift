@@ -18,6 +18,7 @@ struct FeatherApp: App {
     @State private var hasDylibsDetected: Bool = false
     @State private var showUpdateBanner = false
     @State private var latestVersion: String = ""
+    @State private var latestReleaseURL: String = ""
     @State private var navigateToUpdates = false
 
 	var body: some Scene {
@@ -52,6 +53,7 @@ struct FeatherApp: App {
 						if showUpdateBanner && !updateBannerDismissed {
 							UpdateAvailableView(
 								version: latestVersion,
+                                releaseURL: latestReleaseURL,
 								onDismiss: {
 									updateBannerDismissed = true
 									showUpdateBanner = false
@@ -167,6 +169,7 @@ struct FeatherApp: App {
                 if self.compareVersions(releaseVersion, currentVersion) == .orderedDescending {
                     DispatchQueue.main.async {
                         self.latestVersion = releaseVersion
+                        self.latestReleaseURL = release.htmlUrl
                         self.showUpdateBanner = true
                         AppLogManager.shared.info("Update available: \(release.tagName)", category: "Updates")
                     }

@@ -120,6 +120,7 @@ struct UpdateBannerView: View {
 /// Navigates to Check for Updates page when tapped
 struct UpdateAvailableView: View {
     let version: String
+    let releaseURL: String
     let onDismiss: () -> Void
     let onNavigateToUpdates: () -> Void
     
@@ -186,10 +187,35 @@ struct UpdateAvailableView: View {
                     
                     Spacer()
                     
-                    // Arrow indicator
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.secondary)
+                    // GitHub Release button
+                    Button {
+                        if let url = URL(string: releaseURL) {
+                            UIApplication.shared.open(url)
+                            HapticsManager.shared.softImpact()
+                            AppLogManager.shared.info("Opening GitHub release page", category: "Updates")
+                        }
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "link")
+                                .font(.system(size: 11, weight: .semibold))
+                            Text("Release")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue, Color.blue.opacity(0.8)],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                        )
+                    }
+                    .buttonStyle(.plain)
                     
                     // Dismiss button
                     Button {
@@ -263,6 +289,7 @@ struct UpdateBannerView_Previews: PreviewProvider {
             
             UpdateAvailableView(
                 version: "1.2.0",
+                releaseURL: "https://github.com/aoyn1xw/Portal/releases/tag/v1.2.0",
                 onDismiss: {},
                 onNavigateToUpdates: {}
             )
