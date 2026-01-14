@@ -139,8 +139,18 @@ struct SourcesCellView: View {
 extension SourcesCellView {
 	@ViewBuilder
 	private func _actions(for source: AltSource) -> some View {
-		Button(.localized("Delete"), systemImage: "trash", role: .destructive) {
-			Storage.shared.deleteSource(for: source)
+		if !viewModel.isRequiredSource(source) {
+			Button(.localized("Delete"), systemImage: "trash", role: .destructive) {
+				Storage.shared.deleteSource(for: source)
+			}
+		} else {
+			// Required source - show locked indicator
+			Button {
+				// Do nothing - source is required
+			} label: {
+				Label(.localized("Required"), systemImage: "lock.fill")
+			}
+			.disabled(true)
 		}
 	}
 	
@@ -148,6 +158,12 @@ extension SourcesCellView {
 	private func _contextActions(for source: AltSource) -> some View {
 		Button(.localized("Copy"), systemImage: "doc.on.clipboard") {
 			UIPasteboard.general.string = source.sourceURL?.absoluteString
+		}
+		
+		if viewModel.isRequiredSource(source) {
+			Divider()
+			Label(.localized("Default Source (Cannot Remove)"), systemImage: "lock.shield.fill")
+				.foregroundStyle(.secondary)
 		}
 	}
 }

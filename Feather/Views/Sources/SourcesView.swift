@@ -147,11 +147,13 @@ struct SourcesView: View {
         .task(id: Array(_sources)) {
             await viewModel.fetchSources(_sources)
         }
-        #if !NIGHTLY && !DEBUG
         .onAppear {
+            // Ensure default required source exists
+            viewModel.ensureDefaultSourceExists()
+            #if !NIGHTLY && !DEBUG
             showStarPromptIfNeeded()
+            #endif
         }
-        #endif
     }
     
     // MARK: - Custom Navigation Bar
@@ -439,7 +441,7 @@ struct SourcesView: View {
     #endif
 }
 
-// MARK: - Modern Source Card (Generic)
+// MARK: - Modern Source Card (Generic) - Plain Style
 struct ModernSourceCard: View {
     let title: String
     let subtitle: String
@@ -448,27 +450,27 @@ struct ModernSourceCard: View {
     var accentColor: Color = .cyan
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Floating icon container with glow
+        HStack(spacing: 14) {
+            // Icon container
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(accentColor.opacity(0.12))
-                    .frame(width: 56, height: 56)
+                    .frame(width: 48, height: 48)
                 
                 Image(systemName: iconSystemName)
-                    .font(.system(size: 24, weight: .semibold))
+                    .font(.system(size: 20, weight: .semibold))
                     .foregroundStyle(accentColor)
             }
             
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title)
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 Text(subtitle)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
             
@@ -476,33 +478,21 @@ struct ModernSourceCard: View {
             
             if isPinned {
                 Image(systemName: "pin.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12))
                     .foregroundStyle(accentColor)
-                    .padding(8)
-                    .background(
-                        Circle()
-                            .fill(accentColor.opacity(0.2))
-                    )
             }
             
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.tertiary)
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
     }
 }
 
-// MARK: - Modern Source Card with Icon from URL
+// MARK: - Modern Source Card with Icon from URL - Plain Style
 struct ModernSourceCardWithIcon: View {
     let source: AltSource
     @ObservedObject var viewModel: SourcesViewModel
@@ -516,14 +506,17 @@ struct ModernSourceCardWithIcon: View {
         viewModel.sources[source]?.apps.count ?? 0
     }
     
+    private var isRequired: Bool {
+        viewModel.isRequiredSource(source)
+    }
+    
     var body: some View {
-        HStack(spacing: 16) {
-            // Floating icon container with glow
+        HStack(spacing: 14) {
+            // Icon container
             ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(dominantColor.opacity(0.12))
-                    .frame(width: 56, height: 56)
-                    .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 2)
+                    .frame(width: 48, height: 48)
                 
                 if let iconURL = source.iconURL {
                     LazyImage(url: iconURL) { state in
@@ -531,8 +524,8 @@ struct ModernSourceCardWithIcon: View {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                                .frame(width: 44, height: 44)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .frame(width: 40, height: 40)
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .onAppear {
                                     if let uiImage = state.imageContainer?.image {
                                         extractDominantColor(from: uiImage)
@@ -540,59 +533,53 @@ struct ModernSourceCardWithIcon: View {
                                 }
                         } else {
                             Image(systemName: "globe")
-                                .font(.system(size: 22, weight: .semibold))
-                                .foregroundStyle(.white)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(dominantColor)
                         }
                     }
                 } else {
                     Image(systemName: "globe")
-                        .font(.system(size: 22, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(dominantColor)
                 }
             }
             
-            VStack(alignment: .leading, spacing: 6) {
-                Text(source.name ?? String.localized("Unknown"))
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
+            VStack(alignment: .leading, spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(source.name ?? String.localized("Unknown"))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    if isRequired {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.green)
+                    }
+                }
                 
                 HStack(spacing: 6) {
-                    Image(systemName: "app.fill")
-                        .font(.system(size: 10))
                     Text("\(appCount) \(appCount == 1 ? "app" : "apps")")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.white.opacity(0.7))
             }
             
             Spacer()
             
             if isPinned {
                 Image(systemName: "pin.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12))
                     .foregroundStyle(dominantColor)
-                    .padding(8)
-                    .background(
-                        Circle()
-                            .fill(dominantColor.opacity(0.2))
-                    )
             }
             
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(.tertiary)
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 4)
+        .contentShape(Rectangle())
         .contextMenu {
             Button {
                 viewModel.togglePin(for: source)
@@ -606,12 +593,18 @@ struct ModernSourceCardWithIcon: View {
                 Label(String.localized("Copy"), systemImage: "doc.on.clipboard")
             }
             
-            Divider()
-            
-            Button(role: .destructive) {
-                Storage.shared.deleteSource(for: source)
-            } label: {
-                Label(String.localized("Delete"), systemImage: "trash")
+            if isRequired {
+                Divider()
+                Label(String.localized("Default Source"), systemImage: "checkmark.seal.fill")
+                    .foregroundStyle(.secondary)
+            } else {
+                Divider()
+                
+                Button(role: .destructive) {
+                    Storage.shared.deleteSource(for: source)
+                } label: {
+                    Label(String.localized("Delete"), systemImage: "trash")
+                }
             }
         }
     }

@@ -3,6 +3,25 @@ import AltSourceKit
 import SwiftUI
 import NimbleJSON
 
+// MARK: - Default Required Source Configuration
+struct DefaultSourceConfig {
+    static let wsfSourceURL = "https://raw.githubusercontent.com/WSF-Team/WSF/refs/heads/main/Repo/app-repo.json"
+    static let wsfSourceName = "WSF Repository"
+    
+    static var requiredSourceURLs: [String] {
+        [wsfSourceURL]
+    }
+    
+    static func isRequiredSource(_ url: String?) -> Bool {
+        guard let url = url else { return false }
+        return requiredSourceURLs.contains(url)
+    }
+    
+    static func isRequiredSource(_ source: AltSource) -> Bool {
+        isRequiredSource(source.sourceURL?.absoluteString)
+    }
+}
+
 // MARK: - Class
 final class SourcesViewModel: ObservableObject {
 	static let shared = SourcesViewModel()
@@ -33,6 +52,36 @@ final class SourcesViewModel: ObservableObject {
 	func isPinned(_ source: AltSource) -> Bool {
 		guard let id = source.sourceURL?.absoluteString else { return false }
 		return pinnedSourceIDs.contains(id)
+	}
+	
+	/// Check if a source is a required default source that cannot be removed
+	func isRequiredSource(_ source: AltSource) -> Bool {
+		return DefaultSourceConfig.isRequiredSource(source)
+	}
+	
+	/// Ensure the default required source exists
+	func ensureDefaultSourceExists() {
+		AppLogManager.shared.info("Checking for default required source...", category: "Sources")
+		
+		let defaultURL = DefaultSourceConfig.wsfSourceURL
+		
+		// Check if source already exists in CoreData
+		let context = Storage.shared.container.viewContext
+		let fetchRequest = AltSource.fetchRequest()
+		fetchRequest.predicate = NSPredicate(format: "sourceURL == %@", defaultURL)
+		
+		do {
+			let existingSources = try context.fetch(fetchRequest)
+			if existingSources.isEmpty {
+				AppLogManager.shared.info("Adding default WSF source...", category: "Sources")
+				Storage.shared.addSource(url: defaultURL)
+				AppLogManager.shared.success("Default WSF source added successfully", category: "Sources")
+			} else {
+				AppLogManager.shared.debug("Default WSF source already exists", category: "Sources")
+			}
+		} catch {
+			AppLogManager.shared.error("Failed to check for default source: \(error.localizedDescription)", category: "Sources")
+		}
 	}
 	
 	func fetchSources(_ sources: FetchedResults<AltSource>, refresh: Bool = false, batchSize: Int = 4) async {
